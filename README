@@ -1,0 +1,24 @@
+IOSTAT Extended
+by Olivier Doucet
+version 0.01
+
+
+This tool can show iostat grouped by DRBD group, or if any, physical device.
+(running on Linux only)
+
+
+Usage: 
+php iostat.php <seconds>
+
+Example : 
+php iostat.php 10 
+will run the tool with 10 seconds aggregate.
+
+
+HOW IT WORKS
+This tool is reading /sys/block/xxx/stat files so there is no lock.
+
+
+TODO
+Specify physical device / drbd device
+More comments in source :)
