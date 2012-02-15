@@ -46,11 +46,16 @@ ksort($arrayDRBD);
 ksort($arrayDM);
 
 // mapping DRBDid
+$maxSizeName = 0;
 foreach ($arrayDRBD as $name => $array) {
     $infos = stat($name);
     $arrayDRBDid[$name] = $infos['rdev'] % 256;
 }
-unset($name, $array);
+foreach($arrayDM as $name => $id) {
+    if (strlen($name) > $maxSizeName) $maxSizeName = strlen($name);
+}
+define('NAMEMAXLEN', $maxSizeName+3);
+unset($name, $array, $maxSizeName);
 
 // Retrieve DM-X and DRBDX informations
 do {
@@ -73,7 +78,13 @@ do {
     }
     
     // Print part
-    printf("%s\n%45s : riops   wiops      rK/s       wK/s \n", str_repeat('=', 60), 'vg/lv');
+    printf(
+        "%s\n%-".NAMEMAXLEN."s  riops    wiops      rK/s      wK/s \n", 
+            str_repeat('=', floor(NAMEMAXLEN+37-21)/2).
+            date('[Y-m-d H:i:s]').
+            str_repeat('=', floor(NAMEMAXLEN+37-21)/2),
+        ' '
+    );
     foreach ($arrayDRBD as $drbdName => $drbdIds) {
         show_stats(
             $drbdName, 
@@ -99,13 +110,17 @@ do {
  */
 function show_stats($dmName, $arrayStats, $arrayStatsDiff)
 {
+    if ($arrayStats === null || $arrayStatsDiff == null) {
+        printf("%-".NAMEMAXLEN."s\n", $dmName);
+        return;
+    }
     $diffRIOPS = $arrayStats[0] - $arrayStatsDiff[0];
     $diffWIOPS = $arrayStats[4] - $arrayStatsDiff[4];
     $diffRK    = $arrayStats[2] - $arrayStatsDiff[2];
     $diffWK    = $arrayStats[6] - $arrayStatsDiff[6];
     
     printf(
-        "%-45s %6d   %6d    %6d    %6d\n", 
+        "%-".NAMEMAXLEN."s %6d   %6d    %6d    %6d\n", 
         $dmName, 
         ($diffRIOPS == 0) ? '-' : $diffRIOPS/SLEEP,
         ($diffWIOPS == 0) ? '-' : $diffWIOPS/SLEEP,
