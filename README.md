@@ -35,18 +35,17 @@ Output sample
 
 <pre>
 ===============================[2012-09-11 12:34:51]===============================
-                                                  riops    wiops      rK/s      wK/s
-/dev/drbd/common_03                                 10      177        48       879
-   common_03/db_vol1                                 0        1         0        32
-   common_03/db_vol2                                 2        1        16        20
-   common_03/db_vol3                                 0        0         0         0
-   common_03/db_vol4                                 0        1         0         4
-   common_03/db_vol5                                 1        1         4         8
-   common_03/db_vol6                                 7      113        28       395
-   common_03/db_vol7                                 0       60         0       420
-/dev/drbd/common_04                                  0      116         0       278
-   common_03/block_mail                              0       22         0        22
-   common_03/fs_mail                                 0       94         0       256
+ riops    wiops      rK/s      wK/s
+    65      154      1260       226 /dev/drbd/common_03
+     1        1        16         4    common_03/db_vol1
+    34        2       844        20    common_03/db_vol2
+     0        0         0         0    common_03/db_vol3
+    28        1       392         8    common_03/db_vol4
+     0       54         0       194    common_03/sys_servers
+     0      110         0       295 /dev/drbd/common_04
+     0        0         0         0    common_03/block_mail
+     0      110         0       295    common_03/fs_mail
+
 </pre>
 
 TODO
