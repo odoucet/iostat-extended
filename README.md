@@ -12,13 +12,15 @@ This tool can show iostat grouped by DRBD group, or if any, physical device.
 Usage
 -----
 
+```bash
 php iostat.php <seconds>
-
+```
 
 Example
 -------
-
+```bash
 php iostat.php 10 
+```
 will run the tool with 10 seconds aggregate.
 
 
@@ -31,6 +33,7 @@ This tool is reading /sys/block/xxx/stat files so there is no lock.
 Output sample
 -------------
 
+<pre>
 ===============================[2012-09-11 12:34:51]===============================
                                                   riops    wiops      rK/s      wK/s
 /dev/drbd/common_03                                 10      177        48       879
@@ -44,7 +47,7 @@ Output sample
 /dev/drbd/common_04                                  0      116         0       278
    common_03/block_mail                              0       22         0        22
    common_03/fs_mail                                 0       94         0       256
-
+</pre>
 
 TODO
 ----
