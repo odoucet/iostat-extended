@@ -52,6 +52,5 @@ Output sample
 TODO
 ----
 
-Specify physical device / drbd device
-More comments in source :)
-Add colors
+* Specify physical device / drbd device
+* More comments in source :)

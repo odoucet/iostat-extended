@@ -5,11 +5,18 @@
  * @version 0.01
  **/
 
+// Linux only
+if (!file_exists('/sys/block')) {
+	echo "This script runs only under Linux or similar OS (need /sys/block)\n";
+	exit(1);
+}
+
 // @todo argv
 
 if (isset($argv[1])) {
     define('SLEEP', (int) $argv[1]);
 } else {
+	echo "No arg given, we will play at 1 second interval (default value)\n";
     define('SLEEP', 1);
 }
 
@@ -21,6 +28,7 @@ $arrayDRBDid    = array(); // DRBD name to DRBD id
 
 $arrayStats     = array(); // /sys/block/xx/stat content
 $arrayStatsDiff = array(); // copy of arrayStats for differentials
+
 
 echo "Preparing data ...\n";
 
@@ -60,8 +68,31 @@ foreach ($arrayDRBD as $name => $array) {
 foreach($arrayDM as $name => $id) {
     if (strlen($name) > $maxSizeName) $maxSizeName = strlen($name);
 }
-define('NAMEMAXLEN', $maxSizeName+3);
+
+$bashCols = (int) exec('tput cols');
+if ($bashCols === 0) {
+	// error extracting
+	define('NAMEMAXLEN', $maxSizeName+3);
+	
+} elseif ($bashCols < (36+$maxSizeName+3)) {
+	// not enough space
+	if ($bashCols <= 40) {
+		echo "Your shell must have a width of 40 characters minimum.\n";
+		exit(1);
+	} else {
+		define('NAMEMAXLEN', $bashCols - 35);
+	}
+	
+} else {
+	define('NAMEMAXLEN', $maxSizeName+3);
+	
+}
+
 unset($name, $array, $maxSizeName);
+
+// @todo : check shell height if we can print all lines
+//         $bashRows = exec('tput lines');
+
 
 // Retrieve DM-X and DRBDX informations
 do {
@@ -85,7 +116,7 @@ do {
     
     // Print part
     printf(
-        "%s\n%-".NAMEMAXLEN."s  riops    wiops      rK/s      wK/s \n", 
+        "%s\n riops    wiops      rK/s      wK/s %-".NAMEMAXLEN."s\n", 
             str_repeat('=', floor(NAMEMAXLEN+37-21)/2).
             date('[Y-m-d H:i:s]').
             str_repeat('=', floor(NAMEMAXLEN+37-21)/2),
@@ -93,14 +124,15 @@ do {
     );
 	if (count($arrayDRBD) == 0) {
         foreach ($arrayDM as $dmName => $dmId) {
-            show_stats('   '.$dmName, $arrayStats['dm-'.$dmId], $arrayStatsDiff['dm-'.$dmId]);
+            show_stats($dmName, $arrayStats['dm-'.$dmId], $arrayStatsDiff['dm-'.$dmId]);
         }
 	} else
     foreach ($arrayDRBD as $drbdName => $drbdIds) {
         show_stats(
             $drbdName, 
             $arrayStats['drbd'.$arrayDRBDid[$drbdName]], 
-            $arrayStatsDiff['drbd'.$arrayDRBDid[$drbdName]]
+            $arrayStatsDiff['drbd'.$arrayDRBDid[$drbdName]],
+			"\033[0;30m\033[44m"
         );
         
         foreach ($arrayDM as $dmName => $dmId) {
@@ -119,7 +151,7 @@ do {
  * @var $arrayStats latest values
  * @var $arrayStats old values
  */
-function show_stats($dmName, $arrayStats, $arrayStatsDiff)
+function show_stats($dmName, $arrayStats, $arrayStatsDiff, $color = false)
 {
     if ($arrayStats === null || $arrayStatsDiff == null) {
         printf("%-".NAMEMAXLEN."s\n", $dmName);
@@ -129,13 +161,21 @@ function show_stats($dmName, $arrayStats, $arrayStatsDiff)
     $diffWIOPS = $arrayStats[4] - $arrayStatsDiff[4];
     $diffRK    = $arrayStats[2] - $arrayStatsDiff[2];
     $diffWK    = $arrayStats[6] - $arrayStatsDiff[6];
+	if ($color === false) {
+		$color = '';
+		$colorEnd = '';
+	} else {
+		$color = $color.'';
+		$colorEnd = " \033[0m";
+	}
+	
     
     printf(
-        "%-".NAMEMAXLEN."s %6d   %6d    %6d    %6d\n", 
-        $dmName, 
+        $color."%6d   %6d    %6d    %6d %-".NAMEMAXLEN."s ".$colorEnd."\n", 
         ($diffRIOPS == 0) ? '-' : $diffRIOPS/SLEEP,
         ($diffWIOPS == 0) ? '-' : $diffWIOPS/SLEEP,
         ($diffRK == 0)    ? '-' : $diffRK*512/1024/SLEEP,
-        ($diffWK == 0)    ? '-' : $diffWK*512/1024/SLEEP
+        ($diffWK == 0)    ? '-' : $diffWK*512/1024/SLEEP,
+		substr($dmName, 0, NAMEMAXLEN)
     );
 }
