@@ -16,6 +16,7 @@ if (isset($argv[1])) {
 // Variables needed
 $arrayDM        = array(); // DM name to ID mapping
 $arrayDRBD      = array(); // DRBD name to DM id mapping
+$arrayDisks     = array(); // if no DRBD, DM id mapping will be put here
 $arrayDRBDid    = array(); // DRBD name to DRBD id
 
 $arrayStats     = array(); // /sys/block/xx/stat content
@@ -35,7 +36,12 @@ foreach ($lvsOutput as $row) {
     $infos = explode(':', trim($row));
     if ($infos[0] != '' && $infos[1] != '') {
         $arrayDM[$infos[0].'/'.$infos[1]] = (int) $infos[3];
-        $arrayDRBD[substr($infos[2], 0, strpos($infos[2], '('))][] = (int) $infos[3];
+		
+		// DRBD used ?
+		if (strpos($infos[2], 'drbd') !== false)
+			$arrayDRBD[substr($infos[2], 0, strpos($infos[2], '('))][] = (int) $infos[3];
+		else
+			$arrayDisks[] = (int) $infos[3];
     }
 }
 if (count($arrayDM) == 0) die("ERROR: lvs not present or no lvs in this system\n");
@@ -85,6 +91,11 @@ do {
             str_repeat('=', floor(NAMEMAXLEN+37-21)/2),
         ' '
     );
+	if (count($arrayDRBD) == 0) {
+        foreach ($arrayDM as $dmName => $dmId) {
+            show_stats('   '.$dmName, $arrayStats['dm-'.$dmId], $arrayStatsDiff['dm-'.$dmId]);
+        }
+	} else
     foreach ($arrayDRBD as $drbdName => $drbdIds) {
         show_stats(
             $drbdName, 
